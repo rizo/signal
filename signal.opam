@@ -1,0 +1,13 @@
+opam-version: "2.0"
+maintainer: "Rizo I. <rizo@odis.io>"
+authors: "Rizo I. <rizo@odis.io>"
+homepage: "https://github.com/rizo/signal"
+bug-reports: "https://github.com/rizo/signal/issues"
+synopsis: "A small library for reactive signals."
+
+depends: [
+  "ocaml"
+  "dune" {build}
+  "ocaml-lsp-server" {with-dev-setup}
+  "ocamlformat" {with-dev-setup}
+]
