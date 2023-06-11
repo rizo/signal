@@ -140,7 +140,6 @@ val sample : on:_ t -> 'b t -> 'b t
 (** [sample ~on:s1 s2] samples values from [s2] any time a value is emitted to
     [s1]. *)
 
-(* Currently defined in [Signal_syntax] for compatibility with ReScript. *)
 (* {2 Syntax definitions} *)
 
 module Syntax : sig
