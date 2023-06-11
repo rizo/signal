@@ -3,7 +3,23 @@ maintainer: "Rizo I. <rizo@odis.io>"
 authors: "Rizo I. <rizo@odis.io>"
 homepage: "https://github.com/rizo/signal"
 bug-reports: "https://github.com/rizo/signal/issues"
+dev-repo: "git+https://github.com/rizo/signal.git"
 synopsis: "A small library for reactive signals."
+
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
 
 depends: [
   "ocaml"
