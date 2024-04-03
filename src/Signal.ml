@@ -1,9 +1,7 @@
 module List_ext = struct
   let mem ?(eq = Stdlib.( = )) x l =
     let rec search eq x l =
-      match l with
-      | [] -> false
-      | y :: l' -> eq x y || search eq x l'
+      match l with [] -> false | y :: l' -> eq x y || search eq x l'
     in
     search eq x l
 
@@ -11,14 +9,15 @@ module List_ext = struct
     let rec remove_one ~eq x acc l =
       match l with
       | [] -> assert false
-      | y :: tl when eq x y -> y, List.rev_append acc tl
+      | y :: tl when eq x y -> (y, List.rev_append acc tl)
       | y :: tl -> remove_one ~eq x (y :: acc) tl
     in
-    if mem ~eq x l then remove_one ~eq x [] l else invalid_arg "could not remove, element is not a member"
+    if mem ~eq x l then remove_one ~eq x [] l
+    else invalid_arg "could not remove, element is not a member"
 end
 
 (* physical equality *)
-let default_equal = Stdlib.(==)
+let default_equal = Stdlib.( == )
 
 (* Subscription registry for signals. *)
 module Subs : sig
@@ -26,6 +25,7 @@ module Subs : sig
   type 'a t
 
   val empty : unit -> 'a t
+
   (* val length : 'a t -> int *)
   val add : ?label:string -> 'a sub -> 'a t -> unit
   val dispatch : 'a -> 'a t -> unit
@@ -36,25 +36,31 @@ end = struct
   type 'a t = (string * 'a sub ref) list ref
 
   let empty () = ref []
+
   (* let length subs = List.length !subs *)
-  let add ?(label="") (k : 'a sub) subs = subs := List.append !subs [ (label, ref k) ]
+  let add ?(label = "") (k : 'a sub) subs =
+    subs := List.append !subs [ (label, ref k) ]
+
   let dispatch x subs = List.iter (fun (_, k) -> !k x) !subs
+
   let remove k subs =
-    let (_, k'), subs' = List_ext.remove_one ~eq:(fun (_, s1) (_, s2) -> !s1 == !s2) ("", ref k) !subs in
+    let (_, k'), subs' =
+      List_ext.remove_one
+        ~eq:(fun (_, s1) (_, s2) -> !s1 == !s2)
+        ("", ref k)
+        !subs
+    in
     (* If remove is called during dispatch, dispatch will have referred to the original list. We set the
        removed k to ignore to avoid calling it. *)
     k' := ignore;
     subs := subs'
-  
+
   (* let names subs = List.map fst !subs *)
 end
 
 (* Notification *)
 
-type notification = {
-  add : (unit -> unit) -> unit;
-  run : unit -> unit;
-}
+type notification = { add : (unit -> unit) -> unit; run : unit -> unit }
 
 module Notification = struct
   let make () : notification =
@@ -78,7 +84,6 @@ let scope f =
   f notification;
   notification.run ()
 
-
 (* Signal *)
 
 type sub = unit -> unit
@@ -90,31 +95,34 @@ type 'a t = {
   sub : ?label:string -> ('a -> unit) -> sub;
 }
 
-let gen_id = let i = ref (-1) in fun () -> incr i; string_of_int !i
+let gen_id =
+  let i = ref (-1) in
+  fun () ->
+    incr i;
+    string_of_int !i
 
 let base ?(equal = default_equal) ~name value =
-  let name = name ^ "#" ^ gen_id() in
+  let name = name ^ "#" ^ gen_id () in
   let subs = Subs.empty () in
   let sub ?label k =
     Subs.add ?label k subs;
-    fun () -> Subs.remove k subs;
+    fun () -> Subs.remove k subs
   in
   let rec s = { name; value; emit; sub }
-  and emit ?(notify=now) x =
-    if not (equal s.value x)then (
+  and emit ?(notify = now) x =
+    if not (equal s.value x) then (
       s.value <- x;
-      notify.add (fun () -> Subs.dispatch x subs)
-    )
+      notify.add (fun () -> Subs.dispatch x subs))
   in
   s
 
-let make ?equal ?(label="make") value = base ?equal ~name:label value
-
+let make ?equal ?(label = "make") value = base ?equal ~name:label value
 let label s = s.name
 
 let null =
   let sub ?label:_ _ () = () in
-  let rec s = { name = "null"; value = (); emit; sub } and emit ?notify:_ _x = () in
+  let rec s = { name = "null"; value = (); emit; sub }
+  and emit ?notify:_ _x = () in
   s
 
 let get s = s.value
@@ -122,7 +130,11 @@ let emit ?notify x s = s.emit ?notify x
 let set x s = emit ~notify:never x s
 let update ?notify f s = s.emit ?notify (f s.value)
 let trigger s = s.emit s.value
-let sub k s = let _ : sub = (s.sub k) in ()
+
+let sub k s =
+  let _ : sub = s.sub k in
+  ()
+
 let sub' k s = s.sub k
 
 let sub2 k s1 s2 =
@@ -161,15 +173,14 @@ let tap f s =
   let _ : sub =
     s.sub (fun x ->
         f x;
-        s'.emit x
-    )
+        s'.emit x)
   in
   s'
 
 let pair s1 s2 =
   let subs = Subs.empty () in
   let rec s' = { name = "pair"; value = (s1.value, s2.value); emit; sub }
-  and emit ?(notify=Notification.now) x =
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   and sub ?label k =
@@ -182,8 +193,9 @@ let pair s1 s2 =
 
 let triple s1 s2 s3 =
   let subs = Subs.empty () in
-  let rec s' = { name = "triple"; value = (s1.value, s2.value, s3.value); emit; sub }
-  and emit ?(notify=Notification.now) x =
+  let rec s' =
+    { name = "triple"; value = (s1.value, s2.value, s3.value); emit; sub }
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   and sub ?label k =
@@ -197,37 +209,77 @@ let triple s1 s2 s3 =
 
 let t5 s1 s2 s3 s4 s5 =
   let subs = Subs.empty () in
-  let rec s' = { name = "t5"; value = (s1.value, s2.value, s3.value, s4.value, s5.value); emit; sub }
-  and emit ?(notify=Notification.now) x =
+  let rec s' =
+    {
+      name = "t5";
+      value = (s1.value, s2.value, s3.value, s4.value, s5.value);
+      emit;
+      sub;
+    }
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   and sub ?label k =
     Subs.add ?label k subs;
     fun () -> Subs.remove k subs
   in
-  let _ : sub = s1.sub (fun x1 -> emit (x1, s2.value, s3.value, s4.value, s5.value)) in
-  let _ : sub = s2.sub (fun x2 -> emit (s1.value, x2, s3.value, s4.value, s5.value)) in
-  let _ : sub = s3.sub (fun x3 -> emit (s1.value, s2.value, x3, s4.value, s5.value)) in
-  let _ : sub = s4.sub (fun x4 -> emit (s1.value, s2.value, s3.value, x4, s5.value)) in
-  let _ : sub = s5.sub (fun x5 -> emit (s1.value, s2.value, s3.value, s4.value, x5)) in
+  let _ : sub =
+    s1.sub (fun x1 -> emit (x1, s2.value, s3.value, s4.value, s5.value))
+  in
+  let _ : sub =
+    s2.sub (fun x2 -> emit (s1.value, x2, s3.value, s4.value, s5.value))
+  in
+  let _ : sub =
+    s3.sub (fun x3 -> emit (s1.value, s2.value, x3, s4.value, s5.value))
+  in
+  let _ : sub =
+    s4.sub (fun x4 -> emit (s1.value, s2.value, s3.value, x4, s5.value))
+  in
+  let _ : sub =
+    s5.sub (fun x5 -> emit (s1.value, s2.value, s3.value, s4.value, x5))
+  in
   s'
 
 let t6 s1 s2 s3 s4 s5 s6 =
   let subs = Subs.empty () in
-  let rec s' = { name = "t6"; value = (s1.value, s2.value, s3.value, s4.value, s5.value, s6.value); emit; sub }
-  and emit ?(notify=Notification.now) x =
+  let rec s' =
+    {
+      name = "t6";
+      value = (s1.value, s2.value, s3.value, s4.value, s5.value, s6.value);
+      emit;
+      sub;
+    }
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   and sub ?label k =
     Subs.add ?label k subs;
     fun () -> Subs.remove k subs
   in
-  let _ : sub = s1.sub (fun x1 -> emit (x1, s2.value, s3.value, s4.value, s5.value, s6.value)) in
-  let _ : sub = s2.sub (fun x2 -> emit (s1.value, x2, s3.value, s4.value, s5.value, s6.value)) in
-  let _ : sub = s3.sub (fun x3 -> emit (s1.value, s2.value, x3, s4.value, s5.value, s6.value)) in
-  let _ : sub = s4.sub (fun x4 -> emit (s1.value, s2.value, s3.value, x4, s5.value, s6.value)) in
-  let _ : sub = s5.sub (fun x5 -> emit (s1.value, s2.value, s3.value, s4.value, x5, s6.value)) in
-  let _ : sub = s6.sub (fun x6 -> emit (s1.value, s2.value, s3.value, s4.value, s5.value, x6)) in
+  let _ : sub =
+    s1.sub (fun x1 ->
+        emit (x1, s2.value, s3.value, s4.value, s5.value, s6.value))
+  in
+  let _ : sub =
+    s2.sub (fun x2 ->
+        emit (s1.value, x2, s3.value, s4.value, s5.value, s6.value))
+  in
+  let _ : sub =
+    s3.sub (fun x3 ->
+        emit (s1.value, s2.value, x3, s4.value, s5.value, s6.value))
+  in
+  let _ : sub =
+    s4.sub (fun x4 ->
+        emit (s1.value, s2.value, s3.value, x4, s5.value, s6.value))
+  in
+  let _ : sub =
+    s5.sub (fun x5 ->
+        emit (s1.value, s2.value, s3.value, s4.value, x5, s6.value))
+  in
+  let _ : sub =
+    s6.sub (fun x6 ->
+        emit (s1.value, s2.value, s3.value, s4.value, s5.value, x6))
+  in
   s'
 
 let filter pred ~seed s =
@@ -236,12 +288,17 @@ let filter pred ~seed s =
     Subs.add ?label k subs;
     fun () -> Subs.remove k subs
   in
-  let rec s' = { name = "filter"; value = (if pred s.value then s.value else seed); emit; sub }
-  and emit ?(notify=Notification.now) x =
+  let rec s' =
+    {
+      name = "filter";
+      value = (if pred s.value then s.value else seed);
+      emit;
+      sub;
+    }
+  and emit ?(notify = Notification.now) x =
     if pred x then (
       s'.value <- x;
-      notify.add (fun () -> Subs.dispatch x subs)
-    )
+      notify.add (fun () -> Subs.dispatch x subs))
   in
   let _ : sub = s.sub emit in
   s'
@@ -255,24 +312,16 @@ let filter_map f ~seed s =
   let rec s' =
     {
       name = "filter_map";
-      value =
-        ( match f s.value with
-        | Some x -> x
-        | None -> seed
-        );
+      value = (match f s.value with Some x -> x | None -> seed);
       emit;
       sub;
     }
-  and emit ?(notify=Notification.now) x =
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   in
   let _ : sub =
-    s.sub (fun x ->
-        match f x with
-        | Some x' -> emit x'
-        | None -> ()
-    )
+    s.sub (fun x -> match f x with Some x' -> emit x' | None -> ())
   in
   s'
 
@@ -283,7 +332,7 @@ let reduce f init s =
     fun () -> Subs.remove k subs
   in
   let rec s' = { name = "reduce"; value = f init s.value; emit; sub }
-  and emit ?(notify=Notification.now) x =
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   in
@@ -295,10 +344,7 @@ let reducer f init =
   let state_signal =
     reduce
       (fun state event_opt ->
-        match event_opt with
-        | Some event -> f state event
-        | None -> state
-      )
+        match event_opt with Some event -> f state event | None -> state)
       init events
   in
   let dispatch event = emit (Some event) events in
@@ -314,21 +360,24 @@ let select l =
       fun () -> Subs.remove k subs
     in
     let rec s' = { name = "select"; value = s1.value; emit; sub }
-    and emit ?(notify=Notification.now) x =
+    and emit ?(notify = Notification.now) x =
       s'.value <- x;
       notify.add (fun () -> Subs.dispatch x subs)
     in
-    List.iter (fun s -> let _ : sub = s.sub emit in ()) l;
+    List.iter
+      (fun s ->
+        let _ : sub = s.sub emit in
+        ())
+      l;
     s'
 
 let uniq ?(equal = ( == )) s =
   let subs = Subs.empty () in
   let rec s' = { name = "uniq"; value = s.value; emit; sub }
-  and emit ?(notify=Notification.now) x =
+  and emit ?(notify = Notification.now) x =
     if not (equal x s'.value) then (
       s'.value <- x;
-      notify.add (fun () -> Subs.dispatch x subs)
-    )
+      notify.add (fun () -> Subs.dispatch x subs))
   and sub ?label k =
     Subs.add ?label k subs;
     fun () -> Subs.remove k subs
@@ -339,55 +388,54 @@ let uniq ?(equal = ( == )) s =
 let map2 f s1 s2 =
   let subs = Subs.empty () in
   let rec s' = { name = "map2"; value = f s1.value s2.value; emit; sub }
-  and emit ?(notify=Notification.now) x =
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   and sub ?label k =
     Subs.add ?label k subs;
     fun () -> Subs.remove k subs
   in
-  let _ : sub = (s1.sub (fun x1 -> emit (f x1 s2.value))) in
-  let _ : sub = (s2.sub (fun x2 -> emit (f s1.value x2))) in
+  let _ : sub = s1.sub (fun x1 -> emit (f x1 s2.value)) in
+  let _ : sub = s2.sub (fun x2 -> emit (f s1.value x2)) in
   s'
 
 let map3 f s1 s2 s3 =
   let subs = Subs.empty () in
-  let rec s' = { name = "map3"; value = f s1.value s2.value s3.value; emit; sub }
-  and emit ?(notify=Notification.now) x =
+  let rec s' =
+    { name = "map3"; value = f s1.value s2.value s3.value; emit; sub }
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   and sub ?label k =
     Subs.add ?label k subs;
     fun () -> Subs.remove k subs
   in
-  let _ : sub = (s1.sub (fun x1 -> emit (f x1 s2.value s3.value))) in
-  let _ : sub = (s2.sub (fun x2 -> emit (f s1.value x2 s3.value))) in
-  let _ : sub = (s3.sub (fun x3 -> emit (f s1.value s2.value x3))) in
+  let _ : sub = s1.sub (fun x1 -> emit (f x1 s2.value s3.value)) in
+  let _ : sub = s2.sub (fun x2 -> emit (f s1.value x2 s3.value)) in
+  let _ : sub = s3.sub (fun x3 -> emit (f s1.value s2.value x3)) in
   s'
 
 let sample ?equal ~on:s1 s2 =
   let s' = base ?equal ~name:"sample" s2.value in
-  let _ : sub = (s1.sub (fun _ -> s'.emit s2.value)) in
+  let _ : sub = s1.sub (fun _ -> s'.emit s2.value) in
   s'
 
 let apply f_s x_s =
   let subs = Subs.empty () in
   let rec s' = { name = "apply"; value = f_s.value x_s.value; emit; sub }
-  and emit ?(notify=Notification.now) x =
+  and emit ?(notify = Notification.now) x =
     s'.value <- x;
     notify.add (fun () -> Subs.dispatch x subs)
   and sub ?label k =
     Subs.add ?label k subs;
     fun () -> Subs.remove k subs
   in
-  let _ : sub = (f_s.sub (fun f -> emit (f x_s.value))) in
-  let _ : sub = (x_s.sub (fun x -> emit (f_s.value x))) in
+  let _ : sub = f_s.sub (fun f -> emit (f x_s.value)) in
+  let _ : sub = x_s.sub (fun x -> emit (f_s.value x)) in
   s'
 
 (* let forward s1 s2 =
-  sub (fun x -> emit x s2)  *)
-
-
+   sub (fun x -> emit x s2) *)
 
 module Syntax = struct
   let ( let+ ) s f = map f s
