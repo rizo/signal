@@ -83,7 +83,7 @@ let scope f =
 
 type sub = unit -> unit
 
-type !'a t = {
+type 'a t = {
   name : string;
   mutable value : 'a;
   emit : ?notify:notification -> 'a -> unit;

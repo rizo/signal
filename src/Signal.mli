@@ -1,6 +1,6 @@
 (** Reactive signals. *)
 
-type !'a t
+type 'a t
 (** The type for signals that emit values of type ['a]. *)
 
 (** {2 Creating signals} *)
