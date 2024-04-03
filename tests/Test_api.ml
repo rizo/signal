@@ -85,79 +85,84 @@ let test_emit_3 () =
 let test_emit_never_1 () =
   let s = Signal.make 0 in
   Signal.sub (fun _ -> reject "set progagated to subsciber") s;
-  Signal.emit ~notify:Signal.never  1 s;
+  Signal.emit ~notify:Signal.never 1 s;
   ensure "value was set correctly" (Signal.get s = 1)
 
 let test_emit_never_2 () =
   let s = Signal.make 0 in
   let used = ref false in
-  Signal.use (fun _ -> if not !used then used := true else reject "use called twice") s;
+  Signal.use
+    (fun _ -> if not !used then used := true else reject "use called twice")
+    s;
   Signal.sub (fun _ -> reject "set progagated to subsciber") s;
   Signal.emit ~notify:Signal.never 1 s;
   ensure "value was set correctly" (Signal.get s = 1);
-  ensure "used once" (!used)
+  ensure "used once" !used
 
 let test_emit_scoped_1 () =
   let o = ref [] in
   let s = Signal.make ~equal:(fun _ _ -> false) 0 in
-  expect "emit_scoped_1: empty output" [ ] o;
+  expect "emit_scoped_1: empty output" [] o;
   Signal.use (push o) s;
   expect "emit_scoped_1: init output" [ 0 ] o;
   Signal.emit 1 s;
   Signal.scope (fun scope ->
-    ensure "emit_scoped_1: init sync value" (Signal.get s = 1);
-    expect "emit_scoped_1: init sync output 2" [ 0; 1 ] o;
-    Signal.emit ~notify:scope 2 s;
-    ensure "emit_scoped_1: value after first sync emit" (Signal.get s = 2);
-    expect "emit_scoped_1: output after first sync emit" [ 0; 1 ] o;
-    Signal.emit ~notify:scope 2 s;
-    ensure "emit_scoped_1: value after second sync emit" (Signal.get s = 2);
-    expect "emit_scoped_1: output after second sync emit" [ 0; 1 ] o;
-    Signal.emit ~notify:scope 3 s;
-    ensure "emit_scoped_1: value after third sync emit" (Signal.get s = 3);
-    expect "emit_scoped_1: output after third sync emit" [ 0; 1 ] o;
-  );
+      ensure "emit_scoped_1: init sync value" (Signal.get s = 1);
+      expect "emit_scoped_1: init sync output 2" [ 0; 1 ] o;
+      Signal.emit ~notify:scope 2 s;
+      ensure "emit_scoped_1: value after first sync emit" (Signal.get s = 2);
+      expect "emit_scoped_1: output after first sync emit" [ 0; 1 ] o;
+      Signal.emit ~notify:scope 2 s;
+      ensure "emit_scoped_1: value after second sync emit" (Signal.get s = 2);
+      expect "emit_scoped_1: output after second sync emit" [ 0; 1 ] o;
+      Signal.emit ~notify:scope 3 s;
+      ensure "emit_scoped_1: value after third sync emit" (Signal.get s = 3);
+      expect "emit_scoped_1: output after third sync emit" [ 0; 1 ] o);
   expect "emit_scoped_1: output after sync" [ 0; 1; 2; 2; 3 ] o
 
 let test_emit_scoped_2 () =
   let o = ref [] in
   let s = Signal.make 0 |> Signal.uniq ~equal:Int.equal in
-  expect "emit_scoped_2: empty output" [ ] o;
+  expect "emit_scoped_2: empty output" [] o;
   Signal.use (push o) s;
   expect "emit_scoped_2: init output" [ 0 ] o;
   Signal.emit 1 s;
   Signal.scope (fun scope ->
-    ensure "emit_scoped_2: init sync value" (Signal.get s = 1);
-    expect "emit_scoped_2: init sync output 2" [ 0; 1 ] o;
-    Signal.emit ~notify:scope 2 s;
-    ensure "emit_scoped_2: value after first sync emit" (Signal.get s = 2);
-    expect "emit_scoped_2: output after first sync emit" [ 0; 1 ] o;
-    Signal.emit ~notify:scope 2 s;
-    ensure "emit_scoped_2: value after second sync emit" (Signal.get s = 2);
-    expect "emit_scoped_2: output after second sync emit" [ 0; 1 ] o;
-    Signal.emit ~notify:scope 3 s;
-    ensure "emit_scoped_2: value after third sync emit" (Signal.get s = 3);
-    expect "emit_scoped_2: output after third sync emit" [ 0; 1 ] o;
-  );
+      ensure "emit_scoped_2: init sync value" (Signal.get s = 1);
+      expect "emit_scoped_2: init sync output 2" [ 0; 1 ] o;
+      Signal.emit ~notify:scope 2 s;
+      ensure "emit_scoped_2: value after first sync emit" (Signal.get s = 2);
+      expect "emit_scoped_2: output after first sync emit" [ 0; 1 ] o;
+      Signal.emit ~notify:scope 2 s;
+      ensure "emit_scoped_2: value after second sync emit" (Signal.get s = 2);
+      expect "emit_scoped_2: output after second sync emit" [ 0; 1 ] o;
+      Signal.emit ~notify:scope 3 s;
+      ensure "emit_scoped_2: value after third sync emit" (Signal.get s = 3);
+      expect "emit_scoped_2: output after third sync emit" [ 0; 1 ] o);
   expect "emit_scoped_2: output after sync" [ 0; 1; 2; 3 ] o
 
 let test_emit_scoped_3 () =
   let o = ref [] in
   let s_num = Signal.make 1 in
   let s_abc = Signal.make 'a' in
-  let s_two = Signal.pair s_num s_abc |> Signal.uniq ~equal:(=) in
+  let s_two = Signal.pair s_num s_abc |> Signal.uniq ~equal:( = ) in
   Signal.use (push o) s_two;
   Signal.emit 2 s_num;
   Signal.emit 'b' s_abc;
   expect "emit_scoped_3: output before sync" [ (1, 'a'); (2, 'a'); (2, 'b') ] o;
   Signal.scope (fun scope ->
-    Signal.emit ~notify:scope 3 s_num;
-    expect "emit_scoped_3: output after first sync emit" [ (1, 'a'); (2, 'a'); (2, 'b') ] o;
-    Signal.emit ~notify:scope 'c' s_abc;
-    expect "emit_scoped_3: output after second sync emit" [ (1, 'a'); (2, 'a'); (2, 'b') ] o;
-  );
+      Signal.emit ~notify:scope 3 s_num;
+      expect "emit_scoped_3: output after first sync emit"
+        [ (1, 'a'); (2, 'a'); (2, 'b') ]
+        o;
+      Signal.emit ~notify:scope 'c' s_abc;
+      expect "emit_scoped_3: output after second sync emit"
+        [ (1, 'a'); (2, 'a'); (2, 'b') ]
+        o);
   (* With uniq we only get one update for both emits. Without we get two repeated (3, 'c'). *)
-  expect "emit_scoped_3: output after sync" [ (1, 'a'); (2, 'a'); (2, 'b'); (3, 'c') ] o
+  expect "emit_scoped_3: output after sync"
+    [ (1, 'a'); (2, 'a'); (2, 'b'); (3, 'c') ]
+    o
 
 (* trigger *)
 
@@ -166,10 +171,9 @@ let test_trigger_1 () =
   let s = Signal.make ~equal:(fun _ _ -> false) 0 in
   Signal.sub (push o) s;
   Signal.emit 1 s;
-  expect "trigger_1: emitted first time" [1] o;
+  expect "trigger_1: emitted first time" [ 1 ] o;
   Signal.trigger s;
-  expect "trigger_1: emitted second time" [1; 1] o
-
+  expect "trigger_1: emitted second time" [ 1; 1 ] o
 
 (* map *)
 
@@ -211,7 +215,9 @@ let test_map_4 () =
 let test_filter_map_1 () =
   let o = ref [] in
   let s1 = Signal.make 0 in
-  let s2 = Signal.filter_map (fun x -> if x = 0 then None else Some x) ~seed:100 s1 in
+  let s2 =
+    Signal.filter_map (fun x -> if x = 0 then None else Some x) ~seed:100 s1
+  in
   Signal.use (fun x -> push o x) s2;
   Signal.emit 2 s1;
   Signal.emit 0 s1;
@@ -260,7 +266,18 @@ let test_map_emit_3 () =
   Signal.emit 10 s;
   Signal.emit "100" s';
   expect "map_emit_3"
-    [ `i 1; `i 1; `s "1"; `s "1"; `i 10; `i 10; `s "10"; `s "10"; `s "100"; `s "100" ]
+    [
+      `i 1;
+      `i 1;
+      `s "1";
+      `s "1";
+      `i 10;
+      `i 10;
+      `s "10";
+      `s "10";
+      `s "100";
+      `s "100";
+    ]
     o
 
 let test_map_emit_4 () =
@@ -320,7 +337,9 @@ let test_reduce_2 () =
   Signal.emit 3 s1;
   Signal.emit 4 s2;
   Signal.emit 100 s1;
-  expect "reduce_2" [ `s1 1; `s2 1; `s1 2; `s2 3; `s1 3; `s2 6; `s2 4; `s1 100; `s2 104 ] o
+  expect "reduce_2"
+    [ `s1 1; `s2 1; `s1 2; `s2 3; `s1 3; `s2 6; `s2 4; `s1 100; `s2 104 ]
+    o
 
 (* select *)
 
@@ -347,7 +366,19 @@ let test_select_2 () =
   Signal.emit 31 s3;
   Signal.emit 40 s4;
   expect "select_2"
-    [ `s1 10; `s2 20; `s3 30; `s4 10; `s1 11; `s4 11; `s2 21; `s4 21; `s3 31; `s4 31; `s4 40 ]
+    [
+      `s1 10;
+      `s2 20;
+      `s3 30;
+      `s4 10;
+      `s1 11;
+      `s4 11;
+      `s2 21;
+      `s4 21;
+      `s3 31;
+      `s4 31;
+      `s4 40;
+    ]
     o
 
 let test_select_3 () =
@@ -445,7 +476,10 @@ let test_unsub_1 () =
   unsub' ();
   Signal.emit 12 s;
   expect "unsub_1" [ 1; 2; 3; 4; 5 ] o;
-  try unsub (); assert false with Invalid_argument _ -> ()
+  try
+    unsub ();
+    assert false
+  with Invalid_argument _ -> ()
 
 (* TODO: test update, set, use2. *)
 
