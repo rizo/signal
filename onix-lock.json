@@ -3,7 +3,7 @@
    "repositories": [
      {
        "url": "https://github.com/ocaml/opam-repository.git",
-       "rev": "b530f3bbd2a60c24277923f6f8324eafd17ea7d5"
+       "rev": "c516155a4b0ab20ef48da6477bcd2546d2a2bed9"
      }
    ],
    "packages" : {
@@ -110,6 +110,22 @@
          "base-unix",
          "dune",
          "ocaml"
+       ],
+       "build-depends": [
+         "dune"
+       ]
+     },
+     "crunch": {
+       "version": "3.3.1",
+       "src": {
+         "url": "https://github.com/mirage/ocaml-crunch/releases/download/v3.3.1/crunch-3.3.1.tbz",
+         "sha256": "2c5ba0d4110bcbb7731cba4eafb6c44a7487c3f88c1ad47401271b69ffa8ed6a"
+       },
+       "depends": [
+         "cmdliner",
+         "dune",
+         "ocaml",
+         "ptime"
        ],
        "build-depends": [
          "dune"
@@ -247,6 +263,23 @@
        ],
        "build-depends": [
          "dune"
+       ]
+     },
+     "fmt": {
+       "version": "0.9.0",
+       "src": {
+         "url": "https://erratique.ch/software/fmt/releases/fmt-0.9.0.tbz",
+         "sha512": "66cf4b8bb92232a091dfda5e94d1c178486a358cdc34b1eec516d48ea5acb6209c0dfcb416f0c516c50ddbddb3c94549a45e4a6d5c5fd1c81d3374dec823a83b"
+       },
+       "depends": [
+         "base-unix",
+         "cmdliner",
+         "ocaml"
+       ],
+       "build-depends": [
+         "ocamlbuild",
+         "ocamlfind",
+         "topkg"
        ]
      },
      "fpath": {
@@ -396,7 +429,7 @@
        "version": "5.1.2+trunk",
        "src": {
          "url": "https://github.com/ocaml/ocaml/archive/5.1.tar.gz",
-         "sha256": "1z407p92na529fx4sq0z2cb4h0806irmz5679ra368dsnb98iq17"
+         "sha256": "1ljj1dc0x5rjgld0wjq1dzf539y3jlqh08y46l52cnsp7hn1blg0"
        }
      },
      "ocaml-version": {
@@ -530,6 +563,46 @@
          "ocamlfind"
        ]
      },
+     "odoc": {
+       "version": "2.4.1",
+       "src": {
+         "url": "https://github.com/ocaml/odoc/releases/download/2.4.1/odoc-2.4.1.tbz",
+         "sha256": "b814a0b9020b503eb67f17d1d9a969d052b63d8cdc7cdfa5fb793b137558cedb"
+       },
+       "depends": [
+         "astring",
+         "cmdliner",
+         "crunch",
+         "dune",
+         "fmt",
+         "fpath",
+         "ocaml",
+         "odoc-parser",
+         "result",
+         "tyxml"
+       ],
+       "build-depends": [
+         "cppo",
+         "dune"
+       ]
+     },
+     "odoc-parser": {
+       "version": "2.4.1",
+       "src": {
+         "url": "https://github.com/ocaml/odoc/releases/download/2.4.1/odoc-2.4.1.tbz",
+         "sha256": "b814a0b9020b503eb67f17d1d9a969d052b63d8cdc7cdfa5fb793b137558cedb"
+       },
+       "depends": [
+         "astring",
+         "camlp-streams",
+         "dune",
+         "ocaml",
+         "result"
+       ],
+       "build-depends": [
+         "dune"
+       ]
+     },
      "ordering": {
        "version": "3.14.2",
        "src": {
@@ -571,6 +644,21 @@
        ],
        "build-depends": [
          "dune"
+       ]
+     },
+     "ptime": {
+       "version": "1.1.0",
+       "src": {
+         "url": "https://erratique.ch/software/ptime/releases/ptime-1.1.0.tbz",
+         "sha512": "309b8383f61b58840e58a82802ec8fbc61b7cc95a4590d38ad427e484cbaaf66f03fa8e6484b5b6855468a87e745aed103bf6f1041ec05062230a9fa5fb86cc6"
+       },
+       "depends": [
+         "ocaml"
+       ],
+       "build-depends": [
+         "ocamlbuild",
+         "ocamlfind",
+         "topkg"
        ]
      },
      "re": {
@@ -630,6 +718,9 @@
        ],
        "build-depends": [
          "dune"
+       ],
+       "doc-depends": [
+         "odoc"
        ],
        "dev-setup-depends": [
          "ocaml-lsp-server",
@@ -698,6 +789,23 @@
        "build-depends": [
          "ocamlbuild",
          "ocamlfind"
+       ]
+     },
+     "tyxml": {
+       "version": "4.6.0",
+       "src": {
+         "url": "https://github.com/ocsigen/tyxml/releases/download/4.6.0/tyxml-4.6.0.tbz",
+         "sha256": "bfeb673c6b4e120a4eca4c48448add47dc3f8d02c2b40f63ffdccc4e91c902dd"
+       },
+       "depends": [
+         "dune",
+         "ocaml",
+         "re",
+         "seq",
+         "uutf"
+       ],
+       "build-depends": [
+         "dune"
        ]
      },
      "uucp": {

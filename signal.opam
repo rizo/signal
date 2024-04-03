@@ -26,4 +26,5 @@ depends: [
   "dune" {build}
   "ocaml-lsp-server" {with-dev-setup}
   "ocamlformat" {with-dev-setup}
+  "odoc" {with-doc}
 ]
