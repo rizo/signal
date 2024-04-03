@@ -41,7 +41,7 @@ end = struct
   let dispatch x subs = List.iter (fun (_, k) -> !k x) !subs
   let remove k subs =
     let (_, k'), subs' = List_ext.remove_one ~eq:(fun (_, s1) (_, s2) -> !s1 == !s2) ("", ref k) !subs in
-    (* If remove is called during dispatch, dispatch will have derefed the original list. We set the
+    (* If remove is called during dispatch, dispatch will have deferred the original list. We set the
        removed k to ignore to avoid calling it. *)
     k' := ignore;
     subs := subs'
