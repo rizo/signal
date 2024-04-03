@@ -714,6 +714,7 @@
        "version": "dev",
        "src": { "url": "file://." },
        "depends": [
+         "dune",
          "ocaml"
        ],
        "build-depends": [
