@@ -4,7 +4,7 @@ authors: "Rizo I. <rizo@odis.io>"
 homepage: "https://github.com/rizo/signal"
 bug-reports: "https://github.com/rizo/signal/issues"
 dev-repo: "git+https://github.com/rizo/signal.git"
-synopsis: "A small library for reactive signals."
+synopsis: "A small library for reactive signals"
 
 build: [
   ["dune" "subst"] {dev}
