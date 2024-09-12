@@ -137,7 +137,7 @@ val filter_map : ('a -> 'b option) -> seed:'b -> 'a t -> 'b t
     Note that the resulting signal can be subsribed to independently from [s]. *)
 
 val reduce : ('acc -> 'a -> 'acc) -> 'acc -> 'a t -> 'acc t
-(** [reduce f init s] is a signal computed from continously updating [init]
+(** [reduce f init s] is a signal computed from continuously updating [init]
     using a reducing function [f] applied to [init] and emitted values from [s].
 
     Emitting values directly to this signal will reset the internal accumulator. *)
